@@ -1,15 +1,15 @@
 // ==UserScript==
-// @name         Gemini 代码块自动折叠 (Auto Collapse Code)
-// @namespace    https://github.com/devycx
-// @version      2.1.1
-// @description  自动折叠 Gemini 生成的代码块，支持点击代码区折叠与 Alt+C 全局切换，零阻塞渲染，适配移动端无闪烁
-// @author       devycx
+// @name         Gemini 代码块自动折叠
+// @namespace    https://github.com/devycx/gemini-code-auto-collapse
+// @version      2.1.0
+// @description  把 Gemini 回答里的长代码块默认折起来：超过 5 行自动收起，点折叠条展开、点代码区收起，Alt+C 一键切换全部
+// @author       ycx
 // @license      MIT
+// @homepageURL  https://github.com/devycx/gemini-code-auto-collapse
+// @supportURL   https://github.com/devycx/gemini-code-auto-collapse/issues
 // @match        https://gemini.google.com/*
 // @grant        GM_addStyle
 // @run-at       document-idle
-// @homepageURL  https://github.com/devycx/gemini-code-auto-collapse
-// @supportURL   https://github.com/devycx/gemini-code-auto-collapse/issues
 // ==/UserScript==
 
 (function () {
