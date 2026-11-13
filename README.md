@@ -7,12 +7,12 @@ When Gemini answers with 200–300 lines of code, you have to scroll several scr
 - Install: [Greasy Fork](https://greasyfork.org/en/scripts/605151)
 - Source: [GitHub](https://github.com/devycx/gemini-code-auto-collapse) · [direct .user.js](https://raw.githubusercontent.com/devycx/gemini-code-auto-collapse/main/gemini-code-auto-collapse.user.js)
 - Works on: `https://gemini.google.com/*`
-- Version: 2.2.0
+- Version: 2.2.1
 
 ## What it does
 
 1. **Auto-collapse long code**: blocks with 5 or more lines start collapsed; shorter blocks are left alone.
-2. **Status and line count in the header**: `▶ Click to expand code (42 lines | Alt+C toggles all)` when collapsed, `▼ Click here or the code area to collapse` when expanded.
+2. **Status and line count in the header**: `▶ Click to expand code (42 lines | Alt+C toggles all)` when collapsed, `▼ Click here or the code below to collapse` when expanded.
 3. **Two ways to collapse**: click the header to expand; click anywhere in the expanded code to collapse it again.
 4. **No accidental toggles**: a pointer movement of more than 8px, or selected text on the page, cancels the click.
 5. **Alt+C toggles everything**: if any block is expanded, all collapse; otherwise all expand, with a toast showing the count.

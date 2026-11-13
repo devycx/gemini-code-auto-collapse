@@ -3,7 +3,7 @@
 // @name:en      Gemini Code Block Auto-Collapse - Fold Long Code Blocks
 // @name:zh-CN   Gemini 代码块自动折叠
 // @namespace    https://github.com/devycx/gemini-code-auto-collapse
-// @version      2.2.0
+// @version      2.2.1
 // @description  Automatically collapse long code blocks in Gemini responses into a single header row. Click to expand, click the code to collapse again, and press Alt+C to toggle every block on the page.
 // @description:en  Automatically collapse long code blocks in Gemini responses into a single header row. Click to expand, click the code to collapse again, and press Alt+C to toggle every block on the page.
 // @description:zh-CN  把 Gemini 回答里的长代码块默认折起来：超过 5 行自动收起，点折叠条展开、点代码区收起，Alt+C 一键切换全部
@@ -29,7 +29,7 @@
     const MESSAGES = {
         en: {
             expand: 'Click to expand code',
-            collapse: 'Click here or the code area to collapse',
+            collapse: 'Click here or the code below to collapse',
             shortcut: ' | Alt+C toggles all',
             label: (icon, action, lines, shortcutHint) =>
                 `${icon} ${action} (${lines} line${lines === 1 ? '' : 's'}${shortcutHint})`,

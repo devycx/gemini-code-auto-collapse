@@ -7,7 +7,7 @@ Gemini 网页版一次回你两三百行代码的时候，手机要划好几屏�
 - 安装：[Greasy Fork](https://greasyfork.org/zh-CN/scripts/605151)
 - 源码：[GitHub](https://github.com/devycx/gemini-code-auto-collapse) · [直接安装 .user.js](https://raw.githubusercontent.com/devycx/gemini-code-auto-collapse/main/gemini-code-auto-collapse.user.js)
 - 适用范围：`https://gemini.google.com/*`
-- 版本：2.2.0
+- 版本：2.2.1
 
 ## 它做什么
 
