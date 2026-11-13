@@ -1,8 +1,12 @@
 // ==UserScript==
-// @name         Gemini 代码块自动折叠
+// @name         Gemini Code Block Auto-Collapse - Fold Long Code Blocks
+// @name:en      Gemini Code Block Auto-Collapse - Fold Long Code Blocks
+// @name:zh-CN   Gemini 代码块自动折叠
 // @namespace    https://github.com/devycx/gemini-code-auto-collapse
-// @version      2.1.0
-// @description  把 Gemini 回答里的长代码块默认折起来：超过 5 行自动收起，点折叠条展开、点代码区收起，Alt+C 一键切换全部
+// @version      2.2.0
+// @description  Automatically collapse long code blocks in Gemini responses into a single header row. Click to expand, click the code to collapse again, and press Alt+C to toggle every block on the page.
+// @description:en  Automatically collapse long code blocks in Gemini responses into a single header row. Click to expand, click the code to collapse again, and press Alt+C to toggle every block on the page.
+// @description:zh-CN  把 Gemini 回答里的长代码块默认折起来：超过 5 行自动收起，点折叠条展开、点代码区收起，Alt+C 一键切换全部
 // @author       ycx
 // @license      MIT
 // @homepageURL  https://github.com/devycx/gemini-code-auto-collapse
@@ -15,12 +19,49 @@
 (function () {
     'use strict';
 
-    // ================= 配置项 =================
-    // 代码达到多少行时触发自动折叠（设为 0 则所有代码块一律默认折叠）
+    // ================= Configuration =================
+    // Collapse code blocks with at least this many lines (0 = collapse every block)
     const AUTO_COLLAPSE_THRESHOLD = 5;
-    // 全局展开/折叠快捷键：默认 Alt + C（修改 KeyC 可更换字母，如 KeyZ 代表 Alt + Z）
+    // Global toggle shortcut: Alt + C by default (change KeyC to KeyZ for Alt + Z)
     const SHORTCUT_KEY_CODE = 'KeyC';
-    // ==========================================
+    // =================================================
+
+    const MESSAGES = {
+        en: {
+            expand: 'Click to expand code',
+            collapse: 'Click here or the code area to collapse',
+            shortcut: ' | Alt+C toggles all',
+            label: (icon, action, lines, shortcutHint) =>
+                `${icon} ${action} (${lines} line${lines === 1 ? '' : 's'}${shortcutHint})`,
+            noBlocks: 'No code blocks on this page',
+            collapsedAll: (count) => `Collapsed all ${count} code block${count === 1 ? '' : 's'}`,
+            expandedAll: (count) => `Expanded all ${count} code block${count === 1 ? '' : 's'}`,
+        },
+        'zh-CN': {
+            expand: '点击展开代码',
+            collapse: '点击此处或代码区收起',
+            shortcut: ' | Alt+C 全局切换',
+            label: (icon, action, lines, shortcutHint) => `${icon} ${action}（共 ${lines} 行${shortcutHint}）`,
+            noBlocks: '当前页面暂无代码块',
+            collapsedAll: (count) => `已全部折叠 (${count} 个代码块)`,
+            expandedAll: (count) => `已全部展开 (${count} 个代码块)`,
+        },
+    };
+
+    function detectLocale() {
+        const languages = Array.isArray(navigator.languages) && navigator.languages.length
+            ? navigator.languages
+            : [navigator.language || 'en'];
+        for (const language of languages) {
+            const normalized = String(language).toLowerCase();
+            if (normalized === 'zh' || normalized.startsWith('zh-')) return 'zh-CN';
+            if (normalized === 'en' || normalized.startsWith('en-')) return 'en';
+        }
+        return 'en';
+    }
+
+    const UI_LOCALE = detectLocale();
+    const t = MESSAGES[UI_LOCALE] || MESSAGES.en;
 
     const isCoarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 
@@ -98,7 +139,7 @@
         return text ? text.split('\n').length : 0;
     }
 
-    // 同步代码块本身的文字颜色，避免浅色网页+深色代码块下 inherit 到深色字体导致看不清
+    // Match the code block's own text color so inherited dark text is readable on light pages
     function syncBarTextColor(bar, preEl) {
         const codeEl = preEl.querySelector('code') || preEl;
         const computedColor = window.getComputedStyle(codeEl).color;
@@ -107,13 +148,13 @@
         }
     }
 
-    // 仅在文本真正发生变化时才写入 DOM，阻断 MutationObserver 死循环
+    // Write to the DOM only when the text actually changes, preventing a MutationObserver loop
     function updateBarLabel(bar, preEl, isCollapsed) {
         const lines = getLineCount(preEl);
         const icon = isCollapsed ? '▶' : '▼';
-        const action = isCollapsed ? '点击展开代码' : '点击此处或代码区收起';
-        const shortcutHint = isCoarsePointer ? '' : ' | Alt+C 全局切换';
-        const newText = `${icon} ${action}（共 ${lines} 行${shortcutHint}）`;
+        const action = isCollapsed ? t.expand : t.collapse;
+        const shortcutHint = isCoarsePointer ? '' : t.shortcut;
+        const newText = t.label(icon, action, lines, shortcutHint);
 
         if (bar.dataset.lastText !== newText) {
             bar.dataset.lastText = newText;
@@ -131,7 +172,7 @@
         preEl.classList.toggle('tm-code-hidden', isNowCollapsed);
         updateBarLabel(bar, preEl, isNowCollapsed);
 
-        // 如果折叠了超长代码块且折叠条已滚出屏幕上方，自动平滑对齐视口
+        // If a very long block was collapsed and its bar is above the viewport, scroll it back into view
         if (isNowCollapsed) {
             const rect = bar.getBoundingClientRect();
             if (rect.top < 60) {
@@ -141,7 +182,7 @@
     }
 
     function processCodeBlock(preEl) {
-        // 仅处理对话消息区域内的代码块，避免误伤页面其他组件
+        // Only handle code blocks inside chat messages; leave other page components alone
         if (!preEl.closest('message-content, code-block, .model-response-text, main')) {
             return;
         }
@@ -179,13 +220,13 @@
         preEl.parentNode.insertBefore(bar, preEl);
         updateBarLabel(bar, preEl, shouldCollapse);
 
-        // 1. 点击顶部折叠条切换
+        // 1. Toggle from the header bar
         bar.addEventListener('click', (e) => {
             e.stopPropagation();
             toggleSingleCodeBlock(preEl, bar);
         });
 
-        // 2. 点击展开的代码区域直接折叠（兼容移动端触摸滑动与桌面端划词防误触）
+        // 2. Click an expanded code area to collapse it (guard against touch scrolling and text selection)
         let downX = 0;
         let downY = 0;
 
@@ -203,10 +244,10 @@
 
         preEl.addEventListener('click', (e) => {
             if (e.button !== 0) return;
-            // 如果手指或鼠标发生明显移动（如上下/左右滑动代码或拖拽选词），不折叠
+            // Do not collapse if the pointer moved noticeably (scrolling the code or dragging a selection)
             const moveDist = Math.hypot(e.clientX - downX, e.clientY - downY);
             if (moveDist > 8) return;
-            // 如果当前页面存在选中的高亮文本，不折叠
+            // Do not collapse while text is selected on the page
             const selection = window.getSelection();
             if (selection && selection.toString().trim().length > 0) return;
 
@@ -217,7 +258,7 @@
         });
     }
 
-    // 右上角轻量提示框
+    // Lightweight toast in the top-right corner
     let toastEl = null;
     let toastTimer = null;
     function showToast(msg) {
@@ -234,15 +275,15 @@
         }, 1600);
     }
 
-    // 3. 全局快捷键：一键展开或收起全部代码
+    // 3. Global shortcut: expand or collapse every code block at once
     function toggleAllCodeBlocks() {
         const blocks = Array.from(document.querySelectorAll('pre[data-tm-processed="true"]'));
         if (blocks.length === 0) {
-            showToast('当前页面暂无代码块');
+            showToast(t.noBlocks);
             return;
         }
 
-        // 只要有一个处于展开状态，就全部折叠；否则全部展开
+        // If any block is expanded, collapse all; otherwise expand all
         const hasExpanded = blocks.some(pre => !pre.classList.contains('tm-code-hidden'));
         const targetCollapse = hasExpanded;
 
@@ -255,10 +296,7 @@
             }
         });
 
-        showToast(targetCollapse
-            ? `已全部折叠 (${blocks.length} 个代码块)`
-            : `已全部展开 (${blocks.length} 个代码块)`
-        );
+        showToast(targetCollapse ? t.collapsedAll(blocks.length) : t.expandedAll(blocks.length));
     }
 
     window.addEventListener('keydown', (e) => {
@@ -268,14 +306,14 @@
         }
     });
 
-    // 延迟启动监听，避开 Gemini 首屏核心组件（菜单栏、模型选择器）的初始化水合期
+    // Delay startup to avoid Gemini's first-screen hydration phase (sidebar, model picker)
     function initObserver() {
         injectStyles();
         document.querySelectorAll('pre').forEach(processCodeBlock);
 
         let rafId = null;
         const observer = new MutationObserver((mutations) => {
-            // 过滤掉脚本自身节点（折叠条和提示框）引发的 DOM 变动，降低性能开销
+            // Ignore DOM changes caused by our own bar and toast to reduce observer work
             const hasRelevantMutation = mutations.some(m => {
                 const target = m.target.nodeType === 1 ? m.target : m.target.parentElement;
                 if (!target) return false;
@@ -300,7 +338,7 @@
         });
     }
 
-    // 等待首屏 UI 框架挂载完成后再介入
+    // Wait for the first-screen UI to mount before taking over
     if (document.readyState === 'complete') {
         setTimeout(initObserver, 800);
     } else {
